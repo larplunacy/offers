@@ -1,3 +1,5 @@
+import os
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 import re
 import asyncio
 from datetime import datetime, timedelta, timezone
@@ -387,6 +389,30 @@ async def handle_offer_response(event: events.CallbackQuery.Event):
 # ============================================================
 
 async def main():
+    await client.start(bot_token=BOT_TOKEN)
+    me = await client.get_me()
+    print(f"✅ Бот запущен: @{me.username}")
+    await client.run_until_disconnected()
+
+from aiohttp import web
+
+async def health_check(request):
+    return web.Response(text="Bot is alive")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"✅ Веб-сервер запущен на порту {port}")
+
+async def main():
+    # Запускаем веб-сервер в фоне
+    asyncio.create_task(start_web_server())
+    # Запускаем бота
     await client.start(bot_token=BOT_TOKEN)
     me = await client.get_me()
     print(f"✅ Бот запущен: @{me.username}")
